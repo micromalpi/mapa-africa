@@ -82,6 +82,16 @@ button {
 .chip.costero { background:#FFD400; color:#111; }
 .chip.geografico { background:#111; color:#fff; }
 .chip.agua { background:#2196F3; color:#fff; }
+  /* Brillo del siguiente pendiente */
+.siguiente{
+  box-shadow: 0 0 12px 4px rgba(255,255,255,0.9);
+  animation: parpadeo 1.2s infinite alternate;
+}
+@keyframes parpadeo{
+  from { box-shadow: 0 0 6px 2px rgba(255,255,255,0.55); }
+  to   { box-shadow: 0 0 14px 6px rgba(255,255,255,1); }
+}
+
 </style>
 </head>
 
@@ -173,6 +183,7 @@ function toggleModo() {
   document.getElementById("btnModo").textContent =
     "🧠 Modo: " + (modo === "examen" ? "Examen" : "Estudio");
   actualizarEstado();
+  actualizarSiguiente();
 }
 
 function reiniciar() {
@@ -180,32 +191,58 @@ function reiniciar() {
     p.classList.remove("hecho", "fallo");
   });
   actualizarEstado();
+  actualizarSiguiente();
 }
 
+/* ====== BRILLO DEL SIGUIENTE ====== */
+function actualizarSiguiente() {
+  document.querySelectorAll(".punto").forEach(p => p.classList.remove("siguiente"));
+
+  const siguiente = [...document.querySelectorAll(".punto")]
+    .filter(p => !p.classList.contains("hecho"))
+    .sort((a, b) => {
+      const na = parseInt(a.textContent, 10);
+      const nb = parseInt(b.textContent, 10);
+      // si alguno no es número (por ejemplo "R"), lo mandamos al final
+      if (Number.isNaN(na) && Number.isNaN(nb)) return 0;
+      if (Number.isNaN(na)) return 1;
+      if (Number.isNaN(nb)) return -1;
+      return na - nb;
+    })[0];
+
+  if (siguiente) siguiente.classList.add("siguiente");
+}
+
+/* ====== CLIC EN PUNTOS ====== */
 document.querySelectorAll(".punto").forEach(p => {
   p.addEventListener("click", () => {
     const nombre = p.dataset.name;
 
     if (modo === "examen") {
       const r = prompt("Escribe el nombre:");
-      const ok = r && nombre.toLowerCase().includes(r.toLowerCase());
+      const ok = r && nombre.toLowerCase().includes(r.trim().toLowerCase());
+
       if (ok) {
         alert("✅ Correcto");
         p.classList.remove("fallo");
         p.classList.add("hecho");
+        actualizarSiguiente();
       } else {
         alert("❌ Incorrecto, inténtalo otra vez");
-        p.classList.add("fallo");
+        p.classList.add("fallo"); // rojo, pero NO avanza
       }
     } else {
       alert(nombre);
       p.classList.add("hecho");
+      actualizarSiguiente();
     }
   });
 });
 
 actualizarEstado();
+actualizarSiguiente();
 </script>
+
 
 </body>
 </html>
